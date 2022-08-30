@@ -1,0 +1,35 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cw-test-tls
+spec:
+  dnsNames:
+    - "cw-test.zeetdev.com"
+  secretName: cw-test-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: Issuer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test
+  annotations:
+    kubernetes.io/ingress.class: zeet-traefik
+spec:
+  tls:
+    - hosts:
+        - cw-test.zeetdev.com
+      secretName: cw-test-tls
+  rules:
+    - host: cw-test.zeetdev.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nginx-3io1-11yd-production
+                port:
+                  number: 80
