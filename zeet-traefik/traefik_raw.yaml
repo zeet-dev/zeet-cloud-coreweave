@@ -1,0 +1,284 @@
+---
+# Source: traefik/templates/poddisruptionbudget.yaml
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/instance: zeet-traefik
+  minAvailable: 1
+---
+# Source: traefik/templates/rbac/serviceaccount.yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+  annotations:
+---
+# Source: traefik/templates/rbac/role.yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+  - apiGroups:
+      - traefik.containo.us
+    resources:
+      - ingressroutes
+      - ingressroutetcps
+      - ingressrouteudps
+      - middlewares
+      - tlsoptions
+      - tlsstores
+      - traefikservices
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: traefik/templates/rbac/rolebinding.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: zeet-traefik
+subjects:
+  - kind: ServiceAccount
+    name: zeet-traefik
+    namespace: tenant-zeet-dev
+---
+# Source: traefik/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+  annotations:
+    metallb.universe.tf/address-pool: public-ord1
+    external-dns.alpha.kubernetes.io/hostname: "'zeet-traefik.tenant-zeet-dev-ord1.coreweave.cloud'"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: zeet-traefik
+  ports:
+    - port: 80
+      name: web
+      targetPort: "web"
+      protocol: TCP
+    - port: 443
+      name: websecure
+      targetPort: "websecure"
+      protocol: TCP
+---
+# Source: traefik/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/instance: zeet-traefik
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  minReadySeconds: 0
+  template: 
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9100"
+      labels:
+        app.kubernetes.io/name: traefik
+        helm.sh/chart: traefik-1.0.0
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: zeet-traefik
+        firewall.coreweave.cloud/allow-all: "true"
+    spec:
+      imagePullSecrets: [] 
+      serviceAccountName: zeet-traefik
+      terminationGracePeriodSeconds: 60
+      hostNetwork: false 
+      containers:
+      - image: "traefik:2.2.11"
+        imagePullPolicy: IfNotPresent
+        name: zeet-traefik
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "300Mi"
+          limits:
+            cpu: "100m"
+            memory: "300Mi"
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 9000
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 9000
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        ports:
+        - name: "traefik" 
+          containerPort: 9000
+          protocol: TCP
+        - name: "web"
+          containerPort: 8000
+          protocol: TCP
+        - name: "websecure" 
+          containerPort: 8443
+          protocol: TCP 
+        - name: "metrics" 
+          containerPort: 9100
+          protocol: TCP 
+        securityContext:
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        args:
+          - "--global.checknewversion"
+          - "--global.sendanonymoususage"
+          - "--entrypoints.metrics.address=:9100/tcp"
+          - "--entrypoints.traefik.address=:9000/tcp"
+          - "--entrypoints.websecure.address=:8443/tcp"
+          - "--entrypoints.web.address=:8000/tcp"
+          - "--api.dashboard=false"
+          - "--api.insecure=true"
+          - "--ping=true"
+          - "--metrics.prometheus=true"
+          - "--metrics.prometheus.entrypoint=metrics"
+          - "--providers.kubernetescrd"
+          - "--providers.kubernetesingress"
+          - "--providers.kubernetescrd.namespaces=tenant-zeet-dev"
+          - "--providers.kubernetesingress.namespaces=tenant-zeet-dev"
+          - "--entrypoints.websecure.http.tls=true"
+          - "--providers.kubernetesingress.ingressclass=zeet-traefik"
+          - "--providers.kubernetesingress.namespaces=tenant-zeet-dev"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/region
+                    operator: In
+                    values:
+                      - ORD1
+                  - key: node.coreweave.cloud/class
+                    operator: In
+                    values:
+                      - cpu
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/instance
+                    operator: In
+                    values:
+                      - zeet-traefik
+              topologyKey: topology.kubernetes.io/zone
+      tolerations:
+        - key: is_cpu_compute 
+          operator: Exists 
+      securityContext:
+        fsGroup: 65532
+---
+# Source: traefik/templates/hpa.yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: zeet-traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    helm.sh/chart: traefik-1.0.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: zeet-traefik
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: zeet-traefik
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    null
+
