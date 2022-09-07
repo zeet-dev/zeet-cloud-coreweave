@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "region": {
+      "type": "string",
+      "enum": [
+        "ORD1",
+        "EWR1",
+        "LAS1",
+        "LGA1"
+      ],
+      "form": true,
+      "title": "Region",
+      "customComponent": {
+        "id": "region_selector",
+        "component": "RegionSelector"
+      }
+    },
+    "externalDns": {
+      "type": "object",
+      "form": true,
+      "title": "Create a DNS record for the ingress Service",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "form": true,
+          "title": "External DNS Enabled",
+          "description": "Enables an DNS entry pointed at your ingress controller"
+        }
+      }
+    },
+    "controllerClass": {
+      "type": "string",
+      "form": true,
+      "title": "Ingress Controller Class Name",
+      "description": "Custom ingress class name. Will be automatically generated if left blank"
+    },
+    "logs": {
+      "type": "object",
+      "form": true,
+      "title": "Logging",
+      "properties": {
+        "access": {
+          "type": "object",
+          "form": true,
+          "title": "Access Logs",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "form": true,
+              "title": "Enabled",
+              "description": "When enabled you will have be able to see the access logs for the controller."
+            }
+          }
+        },
+        "general": {
+          "type": "object",
+          "form": true,
+          "title": "General Logs",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": [
+                "ERROR",
+                "DEBUG",
+                "INFO",
+                "WARN"
+              ],
+              "form": true,
+              "title": "Level",
+              "description": "Defaults to ERROR for the log level."
+            }
+          }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "form": true,
+      "title": "Autoscaling",
+      "description": "The Autoscaling properties used to determine min and max replicas for your controller.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "form": true,
+          "title": "Enabled"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "form": true,
+          "title": "Minimum Replicas",
+          "minimum": 1,
+          "maximum": 25,
+          "render": "slider",
+          "sliderMin": 1,
+          "sliderMax": 25,
+          "sliderUnit": "replicas"
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "form": true,
+          "title": "Maximum Replicas",
+          "minimum": 1,
+          "maximum": 25,
+          "render": "slider",
+          "sliderMin": 1,
+          "sliderMax": 25,
+          "sliderUnit": "replicas"
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "form": "true",
+      "title": "Deployment",
+      "description": "If Autoscaling is turned off, this number will be used for the replica count.",
+      "properties": {
+        "replicas": {
+          "type": "integer",
+          "form": "true",
+          "title": "Replicas",
+          "minimum": 1,
+          "maximum": 20,
+          "render": "slider",
+          "sliderMin": 1,
+          "sliderMax": 25,
+          "sliderUnit": "replicas"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "form": "true",
+      "title": "Resources",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "form": "true",
+          "title": "Resource Requests",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "form": "true",
+              "title": "CPU"
+            },
+            "memory": {
+              "type": "string",
+              "form": "true",
+              "title": "Memory"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "form": "true",
+          "title": "Resource Limits",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "form": "true",
+              "title": "CPU"
+            },
+            "memory": {
+              "type": "string",
+              "form": "true",
+              "title": "Memory"
+            }
+          }
+        }
+      }
+    },
+    "dashboard": {
+      "type": "object",
+      "form": "true",
+      "title": "Dashboard",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "form": "true",
+          "title": "Enabled",
+          "description": "Enable the dashboard for traefik."
+        }
+      }
+    }
+  },
+  "title": "Values",
+  "type": "object"
+}

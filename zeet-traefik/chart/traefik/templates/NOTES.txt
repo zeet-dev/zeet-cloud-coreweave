@@ -1,0 +1,38 @@
+Thank you for installing Traefik Ingress Controller. The following contains your configuration information.
+
+NOTE: It may take a few minutes for the LoadBalancer IP to be available. You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "traefik.fullname" . }}'
+
+{{ if .Values.externalDns.enabled }}
+
+                  DNS Name
+--------------------------------------------------------------------------------
+| {{ include "traefik.externalHostName" . }} 
+--------------------------------------------------------------------------------
+
+It is recommended that you point DNS records to the ingress controller by using a CNAME to `<dns name>`. Alternatively, if CNAME is not an option, the Load Balancer IP listed in the services section can be used.
+
+It is important to note that for all requests to get through to your controller you will need a wildcard (*) in the Ingress below or you will need to 
+create a a DNS entry for your domain to point to the Controller DNS (when using our external DNS). 
+
+{{ end }}
+
+To use your new Controller just update your Ingress annotations to match your controller as such:
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: {{ include "traefik.controllerClass" . }}
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-test
+  name: {{ .Release.Name }}-test
+spec:
+  rules:
+  - host: example.your-domain.com 
+    http:
+      paths:
+      - backend:
+          serviceName: echo-service
+          servicePort: 80
+        path: /
+        pathType: ImplementationSpecific

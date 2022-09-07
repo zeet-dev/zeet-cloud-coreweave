@@ -1,0 +1,14 @@
+annotations:
+  category: Networking
+apiVersion: v2
+appVersion: 1.16.0
+description: A Traefik based Kubernetes ingress controller
+home: https://traefik.io/
+icon: https://raw.githubusercontent.com/traefik/traefik/v2.3/docs/content/assets/img/traefik.logo.png
+kubeVersion: ^1.8.0-0
+name: traefik
+sources:
+- https://github.com/traefik/traefik
+- https://github.com/traefik/traefik-helm-chart
+type: application
+version: 1.0.0

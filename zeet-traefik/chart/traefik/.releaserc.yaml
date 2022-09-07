@@ -1,0 +1,35 @@
+branches:
+- master
+preset: "angular"
+plugins:
+- "@semantic-release/commit-analyzer"
+- "@semantic-release/exec"
+extends:
+- "semantic-release-monorepo"
+repositoryUrl: "git@github.com:coreweave/kube-charts.git"
+analyzeCommits:
+- path: "@semantic-release/commit-analyzer"
+  releaseRules:
+  - type: "feature"
+    release: "minor"
+  - type: "update"
+    release: "minor"
+  - type: "refactor"
+    release: "patch"
+  - type: "fix"
+    release: "patch"
+  - type: "docs"
+    release: "patch"
+  parserOpts:
+    noteKeywords:
+    - "BREAKING CHANGE"
+    - "BREAKING CHANGES"
+prepare:
+- path: "@semantic-release/exec"
+  prepareCmd: "helm package . --version ${nextRelease.version} --dependency-update" 
+publish:
+- path: "@semantic-release/exec"
+  publishCmd: "helm repo add helm_repo $HELM_REPO_URL --username $HELM_REPO_USER --password $HELM_REPO_PASS && helm cm-push . helm_repo --version ${nextRelease.version}"
+- path: "@semantic-release/github"
+  assets: 
+    path: "*.tgz"

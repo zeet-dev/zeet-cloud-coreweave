@@ -1,0 +1,25 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "traefik.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "traefik.name" . }}
+    helm.sh/chart: {{ template "traefik.chart" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "traefik.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  minReadySeconds: 0
+  template: {{ template "traefik.podTemplate" . }}
