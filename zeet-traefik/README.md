@@ -3,14 +3,9 @@
 1. Install Traefik LB
     ##### Using Zeet
   
-    install traefik on zeet using
+    install traefik on zeet using the official Blueprint
   
-    https://zeet.co/new/helm
-
-    ```
-    repo: `http://helm.corp.ingress.ord1.coreweave.com/`
-    chart: `traefik`
-    ```
+    https://zeet.co/new/zeet/traefik-coreweave
 
     input traefik.yaml in the values
 
@@ -20,12 +15,13 @@
 
 2. Install Cert and Middleware
     ##### Using Zeet
-    https://zeet.co/new/manifest
-
-    reference raw path
-
-    https://raw.githubusercontent.com/zeet-dev/zeet-cloud-coreweave/main/zeet-traefik/cert.yaml
-
+   
+    install traefik config using the official Blueprint
+     
+    https://zeet.co/new/zeet/traefik-config-coreweave
 
     ##### Using kubectl
+    
+    Clone this git repository and navigate into the zeet-traefik folder
+  
     `kubectl apply -f cert.yaml`
